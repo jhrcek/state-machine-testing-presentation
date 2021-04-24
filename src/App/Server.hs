@@ -70,7 +70,7 @@ server =
                             appState
                             ( \projMap_ ->
                                 let newProjId = case Map.lookupMax projMap_ of
-                                        Just (maxId, _) -> maxId
+                                        Just (ProjectId maxId, _) -> ProjectId (maxId + 1)
                                         Nothing -> ProjectId 0
                                  in ( Map.insert newProjId newName projMap_
                                     , newProjId
