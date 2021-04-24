@@ -37,6 +37,7 @@ library
   hs-source-dirs:  src
   build-depends:
     , aeson
+    , containers
     , servant
     , servant-server
     , wai
