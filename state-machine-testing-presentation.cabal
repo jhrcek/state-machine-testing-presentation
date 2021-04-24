@@ -33,12 +33,18 @@ common common-options
 
 library
   import:          common-options
-  exposed-modules: App.Server
+  exposed-modules:
+    App.Api
+    App.Client
+    App.Server
+
   hs-source-dirs:  src
   build-depends:
     , aeson
     , containers
+    , http-client
     , servant
+    , servant-client
     , servant-server
     , wai
     , warp
