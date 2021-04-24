@@ -9,6 +9,7 @@ module App.Client (
     getProjects,
     createProject,
     deleteProject,
+    reset,
 ) where
 
 import Data.Data (Proxy (Proxy))
@@ -30,6 +31,8 @@ initClientEnv port = do
 getProjects :: ClientM [Project]
 createProject :: CreateProject -> ClientM ProjectId
 deleteProject :: ProjectId -> ClientM ()
+reset :: ClientM ()
 getProjects
     :<|> createProject
-    :<|> deleteProject = client (Proxy @API)
+    :<|> deleteProject
+    :<|> reset = client (Proxy @API)

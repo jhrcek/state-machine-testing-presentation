@@ -64,4 +64,5 @@ test-suite state-machine-testing-presentation-test
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
   build-depends:
     , hedgehog
+    , servant-client
     , state-machine-testing-presentation

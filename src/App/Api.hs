@@ -20,6 +20,7 @@ type API =
     "projects" :> Get '[JSON] [Project]
         :<|> "projects" :> ReqBody '[JSON] CreateProject :> Post '[JSON] ProjectId
         :<|> "projects" :> Capture "project-id" ProjectId :> Delete '[JSON] ()
+        :<|> "reset" :> Delete '[JSON] ()
 
 
 newtype ProjectId = ProjectId

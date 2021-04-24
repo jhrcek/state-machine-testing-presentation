@@ -16,7 +16,7 @@ module App.Server (
 import qualified Data.Map.Strict as Map
 
 import Control.Monad.IO.Class (liftIO)
-import Data.IORef (IORef, atomicModifyIORef, atomicModifyIORef', newIORef, readIORef)
+import Data.IORef (IORef, atomicModifyIORef, atomicModifyIORef', newIORef, readIORef, writeIORef)
 import Data.Map.Strict (Map)
 import GHC.IO (unsafePerformIO)
 import Network.Wai.Handler.Warp (Port, run)
@@ -50,6 +50,7 @@ server =
     getProjects
         :<|> createProject
         :<|> deleteProject
+        :<|> reset
   where
     getProjects :: Handler [Project]
     getProjects = liftIO $ do
@@ -83,6 +84,9 @@ server =
         if Map.notMember projId projMap
             then throwError $ err404{errBody = "Failed to delete project: ID doesn't exist"}
             else liftIO $ atomicModifyIORef appState (\projMap_ -> (Map.delete projId projMap_, ()))
+
+    reset :: Handler ()
+    reset = liftIO $ writeIORef appState Map.empty
 
 
 appState :: IORef (Map ProjectId String)
