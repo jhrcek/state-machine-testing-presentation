@@ -1,20 +1,30 @@
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main (main) where
 
-import Lib (app)
-import Test.Hspec
-import Test.Hspec.Wai
-import Test.Hspec.Wai.JSON
+import Hedgehog
+import qualified Hedgehog.Gen as Gen
+import qualified Hedgehog.Range as Range
+import System.Exit (exitFailure, exitSuccess)
+
 
 main :: IO ()
-main = hspec spec
+main = do
+    ok <- tests
+    if ok then exitSuccess else exitFailure
 
-spec :: Spec
-spec = with (return app) $ do
-    describe "GET /users" $ do
-        it "responds with 200" $ do
-            get "/users" `shouldRespondWith` 200
-        it "responds with [User]" $ do
-            let users = "[{\"userId\":1,\"userFirstName\":\"Isaac\",\"userLastName\":\"Newton\"},{\"userId\":2,\"userFirstName\":\"Albert\",\"userLastName\":\"Einstein\"}]"
-            get "/users" `shouldRespondWith` users
+
+tests :: IO Bool
+tests =
+    checkParallel $
+        Group
+            "Test.Example"
+            [ ("prop_reverse", prop_reverse)
+            ]
+
+
+prop_reverse :: Property
+prop_reverse =
+    property $ do
+        xs <- forAll $ Gen.list (Range.linear 0 100) Gen.alpha
+        reverse (reverse xs) === xs
