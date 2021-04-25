@@ -61,10 +61,10 @@ server =
     createProject (CreateProject newName) = do
         projMap <- liftIO $ readIORef appState
         if
-                | newName `elem` projMap ->
-                    throwError $ err409{errBody = "Failed to create project: name already exists"}
                 | Map.size projMap >= maxCapacity ->
                     throwError $ err500{errBody = "Failed to create project: storage full"}
+                | newName `elem` projMap ->
+                    throwError $ err409{errBody = "Failed to create project: name already exists"}
                 | otherwise ->
                     liftIO $
                         atomicModifyIORef'

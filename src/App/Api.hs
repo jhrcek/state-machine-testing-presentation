@@ -34,7 +34,7 @@ data Project = Project
     { projectId :: ProjectId
     , projectName :: String
     }
-    deriving (Eq, Show, Generic)
+    deriving (Eq, Ord, Show, Generic)
     deriving anyclass (FromJSON, ToJSON)
 
 
