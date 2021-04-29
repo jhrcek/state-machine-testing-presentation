@@ -79,9 +79,9 @@ instance HTraversable CreateProjectInput where
         pure (CreateProjectInput name)
 
 
-createProjectCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Command gen m State
+createProjectCmd :: (MonadTest m, MonadIO m) => ClientEnv -> Command Gen m State
 createProjectCmd clientEnv =
-    let gen :: MonadGen gen => State Symbolic -> Maybe (gen (CreateProjectInput Symbolic))
+    let gen :: State Symbolic -> Maybe (Gen (CreateProjectInput Symbolic))
         gen (State m)
             | Map.size m < maxCapacity =
                 let newProjectNameGen =
@@ -126,9 +126,9 @@ instance HTraversable CreateProjectFailFullCapacityInput where
         pure (CreateProjectFailFullCapacityInput name)
 
 
-createProjectFailFullCapacityCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Command gen m State
+createProjectFailFullCapacityCmd :: (MonadTest m, MonadIO m) => ClientEnv -> Command Gen m State
 createProjectFailFullCapacityCmd clientEnv =
-    let gen :: MonadGen gen => State Symbolic -> Maybe (gen (CreateProjectFailFullCapacityInput Symbolic))
+    let gen :: State Symbolic -> Maybe (Gen (CreateProjectFailFullCapacityInput Symbolic))
         gen (State m)
             | Map.size m >= maxCapacity =
                 let newProjectNameGen =
@@ -167,9 +167,9 @@ instance HTraversable CreateProjectFailNameExistsInput where
         pure (CreateProjectFailNameExistsInput name)
 
 
-createProjectFailNameExistsCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Command gen m State
+createProjectFailNameExistsCmd :: (MonadTest m, MonadIO m) => ClientEnv -> Command Gen m State
 createProjectFailNameExistsCmd clientEnv =
-    let gen :: MonadGen gen => State Symbolic -> Maybe (gen (CreateProjectFailNameExistsInput Symbolic))
+    let gen :: State Symbolic -> Maybe (Gen (CreateProjectFailNameExistsInput Symbolic))
         gen (State m)
             | 0 < Map.size m && Map.size m < maxCapacity =
                 let projectNameGen = Gen.element $ existingProjectNames (State m)
@@ -205,9 +205,9 @@ instance HTraversable GetProjectsInput where
         pure GetProjectsInput
 
 
-getProjectsCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Command gen m State
+getProjectsCmd :: (MonadTest m, MonadIO m) => ClientEnv -> Command Gen m State
 getProjectsCmd clientEnv =
-    let gen :: MonadGen gen => State Symbolic -> Maybe (gen (GetProjectsInput Symbolic))
+    let gen :: State Symbolic -> Maybe (Gen (GetProjectsInput Symbolic))
         gen _ = Just $ pure GetProjectsInput
 
         execute :: (MonadTest m, MonadIO m) => GetProjectsInput Concrete -> m [Project]
@@ -239,9 +239,9 @@ instance HTraversable DeleteExistigProjectInput where
         DeleteExistigProjectInput <$> htraverse f projId
 
 
-deleteExistingProjectCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Command gen m State
+deleteExistingProjectCmd :: (MonadTest m, MonadIO m) => ClientEnv -> Command Gen m State
 deleteExistingProjectCmd clientEnv =
-    let gen :: MonadGen gen => State Symbolic -> Maybe (gen (DeleteExistigProjectInput Symbolic))
+    let gen :: State Symbolic -> Maybe (Gen (DeleteExistigProjectInput Symbolic))
         gen (State m) = case Map.keys m of
             -- When there's no project, we can't generate a command to delete a project
             [] -> Nothing
@@ -276,9 +276,9 @@ instance HTraversable DeleteNonExistentProjectInput where
         DeleteNonExistentProjectInput <$> traverse (htraverse f) existingIds
 
 
-deleteNonExistentProjectCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Command gen m State
+deleteNonExistentProjectCmd :: (MonadTest m, MonadIO m) => ClientEnv -> Command Gen m State
 deleteNonExistentProjectCmd clientEnv =
-    let gen :: MonadGen gen => State Symbolic -> Maybe (gen (DeleteNonExistentProjectInput Symbolic))
+    let gen :: State Symbolic -> Maybe (Gen (DeleteNonExistentProjectInput Symbolic))
         gen (State m) =
             let existingIds = Map.keys m
              in Just $ pure (DeleteNonExistentProjectInput existingIds)
