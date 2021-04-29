@@ -4,7 +4,7 @@
 
 # Overview
 
-- Simple example REST api we'll testing
+- Simple example REST api we'll be testing
 - Property testing
     - QuickCheck vs. hedgehog
 - State machine testing (SMT)
@@ -36,7 +36,7 @@
 
 - better coverage with fewer tests written
 - better at discovering edge cases/unexpected feature interactions
-- forces you to think about more abstractly about desired system properties
+- forces you to think more abstractly about desired system properties
 
 ## Disadvantages
 
