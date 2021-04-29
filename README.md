@@ -16,3 +16,4 @@ using `stack test`.
 - see if you can fix the test by adjusting the commands
     - adjust the project name generator to generate valid inputs only
     - add new command that generates invalid project names and expects appropriate app failure
+- generation of project IDs is intentionally buggy. Can you come up with more robust implementation so that it passes parallel tests?
