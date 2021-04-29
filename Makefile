@@ -10,3 +10,7 @@ hlint:
 .PHONY: ide
 ide:
 	ghcid -c'stack repl --main-is state-machine-testing-presentation:test:state-machine-testing-presentation-test state-machine-testing-presentation:lib state-machine-testing-presentation:exe:app-server'
+
+.PHONY: slides
+slides:
+	pandoc -t beamer slides.md -o slides.pdf

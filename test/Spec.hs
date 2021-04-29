@@ -9,11 +9,13 @@ import qualified Hedgehog.Gen as Gen
 import qualified Hedgehog.Range as Range
 
 import Hedgehog
+import Servant.API (NoContent)
 import Servant.Client (ClientEnv, ClientError (FailureResponse), ClientM, runClientM)
 import Servant.Client.Core (ResponseF (..))
 import System.Exit (exitFailure, exitSuccess)
 
 import App.Client (CreateProject (..), Project (..), ProjectId (..))
+import App.Server (maxCapacity)
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString.Lazy (ByteString)
 import Data.Kind (Type)
@@ -25,7 +27,9 @@ import Network.HTTP.Types.Status (Status (statusCode))
 main :: IO ()
 main = do
     ok <- tests
-    if ok then exitSuccess else exitFailure
+    if ok
+        then exitSuccess
+        else exitFailure
 
 
 tests :: IO Bool
@@ -38,7 +42,8 @@ tests =
 
 
 prop_api_tests :: Property
-prop_api_tests = withTests 100 $
+prop_api_tests =
+    --withTests 100 $
     property $ do
         clientEnv <- evalIO (Client.initClientEnv 8080)
         let commands =
@@ -52,7 +57,7 @@ prop_api_tests = withTests 100 $
 
         actions <- forAll $ Gen.sequential (Range.linear 1 100) initialState commands
 
-        evalEither =<< evalIO (runClientM Client.reset clientEnv)
+        _ <- evalEither =<< evalIO (runClientM Client.reset clientEnv)
         --evalIO $ print actions
         executeSequential initialState actions
 
@@ -78,7 +83,7 @@ createProjectCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv -> Comma
 createProjectCmd clientEnv =
     let gen :: MonadGen gen => State Symbolic -> Maybe (gen (CreateProjectInput Symbolic))
         gen (State m)
-            | Map.size m < 10 =
+            | Map.size m < maxCapacity =
                 let newProjectNameGen =
                         let existing = existingProjectNames (State m)
                          in Gen.filterT (`notElem` existing) $
@@ -87,14 +92,15 @@ createProjectCmd clientEnv =
             | otherwise = Nothing
 
         execute :: (MonadTest m, MonadIO m) => CreateProjectInput Concrete -> m ProjectId
-        execute (CreateProjectInput projName) =
+        execute (CreateProjectInput projName) = do
+            label "Create Project (OK)"
             evalClientExpectSuccess clientEnv $
                 Client.createProject (CreateProject projName)
      in Command
             gen
             execute
             [ Require $ \(State m) (CreateProjectInput projName) ->
-                Map.size m < 10 && projName `notElem` m
+                Map.size m < maxCapacity && projName `notElem` m
             , Update $ \(State m) (CreateProjectInput projName) projId ->
                 State $ Map.insert projId projName m
             , Ensure $ \(State stBefore) (State stAfter) (CreateProjectInput projName) projId -> do
@@ -124,7 +130,7 @@ createProjectFailFullCapacityCmd :: (MonadGen gen, MonadTest m, MonadIO m) => Cl
 createProjectFailFullCapacityCmd clientEnv =
     let gen :: MonadGen gen => State Symbolic -> Maybe (gen (CreateProjectFailFullCapacityInput Symbolic))
         gen (State m)
-            | Map.size m >= 10 =
+            | Map.size m >= maxCapacity =
                 let newProjectNameGen =
                         let existing = existingProjectNames (State m)
                          in Gen.filterT (`notElem` existing) $
@@ -133,14 +139,15 @@ createProjectFailFullCapacityCmd clientEnv =
             | otherwise = Nothing
 
         execute :: (MonadTest m, MonadIO m) => CreateProjectFailFullCapacityInput Concrete -> m ClientError
-        execute (CreateProjectFailFullCapacityInput projName) =
+        execute (CreateProjectFailFullCapacityInput projName) = do
+            label "Create Project (Full)"
             evalClientExpectError clientEnv $
                 Client.createProject (CreateProject projName)
      in Command
             gen
             execute
             [ Require $ \(State m) (CreateProjectFailFullCapacityInput _projName) ->
-                Map.size m >= 10
+                Map.size m >= maxCapacity
             , -- No need for Update callback - failure to create should not change the model
               Ensure $ \_stBefore _stAfter (CreateProjectFailFullCapacityInput _projName) clientErr ->
                 assertClientError 500 "Failed to create project: storage full" clientErr
@@ -164,13 +171,14 @@ createProjectFailNameExistsCmd :: (MonadGen gen, MonadTest m, MonadIO m) => Clie
 createProjectFailNameExistsCmd clientEnv =
     let gen :: MonadGen gen => State Symbolic -> Maybe (gen (CreateProjectFailNameExistsInput Symbolic))
         gen (State m)
-            | 0 < Map.size m && Map.size m < 10 =
+            | 0 < Map.size m && Map.size m < maxCapacity =
                 let projectNameGen = Gen.element $ existingProjectNames (State m)
                  in Just $ CreateProjectFailNameExistsInput <$> projectNameGen
             | otherwise = Nothing
 
         execute :: (MonadTest m, MonadIO m) => CreateProjectFailNameExistsInput Concrete -> m ClientError
-        execute (CreateProjectFailNameExistsInput projName) =
+        execute (CreateProjectFailNameExistsInput projName) = do
+            label "Create project (name exists)"
             evalClientExpectError clientEnv $
                 Client.createProject (CreateProject projName)
      in Command
@@ -203,7 +211,8 @@ getProjectsCmd clientEnv =
         gen _ = Just $ pure GetProjectsInput
 
         execute :: (MonadTest m, MonadIO m) => GetProjectsInput Concrete -> m [Project]
-        execute GetProjectsInput =
+        execute GetProjectsInput = do
+            label "Get projects"
             evalClientExpectSuccess clientEnv Client.getProjects
      in Command
             gen
@@ -234,22 +243,21 @@ deleteExistingProjectCmd :: (MonadGen gen, MonadTest m, MonadIO m) => ClientEnv 
 deleteExistingProjectCmd clientEnv =
     let gen :: MonadGen gen => State Symbolic -> Maybe (gen (DeleteExistigProjectInput Symbolic))
         gen (State m) = case Map.keys m of
-            -- When there's no project, we can generate a command to delete a project
+            -- When there's no project, we can't generate a command to delete a project
             [] -> Nothing
             nonEmptyProjects -> Just $ DeleteExistigProjectInput <$> Gen.element nonEmptyProjects
 
-        execute :: (MonadTest m, MonadIO m) => DeleteExistigProjectInput Concrete -> m ()
-        execute (DeleteExistigProjectInput projId) =
+        execute :: (MonadTest m, MonadIO m) => DeleteExistigProjectInput Concrete -> m NoContent
+        execute (DeleteExistigProjectInput projId) = do
+            label "Delete project (OK)"
             evalClientExpectSuccess clientEnv $ Client.deleteProject (concrete projId)
      in Command
             gen
             execute
-            [ Require $ \(State m) (DeleteExistigProjectInput projId) ->
-                Map.member projId m
+            [ Require $ \(State m) (DeleteExistigProjectInput projId) -> Map.member projId m
             , Update $ \(State m) (DeleteExistigProjectInput projId) _ ->
                 State $ Map.delete projId m
-            , -- No need for Update callback - we're just querying the state of external system without modifying it
-              Ensure $ \(State stBefore) (State stAfter) (DeleteExistigProjectInput projId) _ -> do
+            , Ensure $ \(State stBefore) (State stAfter) (DeleteExistigProjectInput projId) _ -> do
                 assert $ Map.member projId stBefore
                 assert $ Map.notMember projId stAfter
             ]
@@ -276,11 +284,12 @@ deleteNonExistentProjectCmd clientEnv =
              in Just $ pure (DeleteNonExistentProjectInput existingIds)
 
         execute :: (MonadTest m, MonadIO m) => DeleteNonExistentProjectInput Concrete -> m ClientError
-        execute (DeleteNonExistentProjectInput existingIds) =
+        execute (DeleteNonExistentProjectInput existingIds) = do
             let nonExistentId = ProjectId $ case unProjectId . concrete <$> existingIds of
                     [] -> 0
                     ids -> maximum ids + 1
-             in evalClientExpectError clientEnv $ Client.deleteProject nonExistentId
+            label "Delete project (non-existent)"
+            evalClientExpectError clientEnv $ Client.deleteProject nonExistentId
      in Command
             gen
             execute
@@ -310,7 +319,8 @@ existingProjectNames (State m) = Map.elems m
 
 
 evalClientExpectSuccess :: (MonadTest m, MonadIO m) => ClientEnv -> ClientM b -> m b
-evalClientExpectSuccess clientEnv action = evalEither =<< evalIO (runClientM action clientEnv)
+evalClientExpectSuccess clientEnv action =
+    evalEither =<< evalIO (runClientM action clientEnv)
 
 
 evalClientExpectError :: (MonadTest m, MonadIO m, Show a) => ClientEnv -> ClientM a -> m ClientError

@@ -67,6 +67,7 @@ test-suite state-machine-testing-presentation-test
     , containers
     , hedgehog
     , http-types
+    , servant
     , servant-client
     , servant-client-core
     , state-machine-testing-presentation

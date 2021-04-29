@@ -11,6 +11,7 @@ module App.Server (
     ProjectId,
     runApp,
     app,
+    maxCapacity,
 ) where
 
 import qualified Data.Map.Strict as Map
@@ -23,6 +24,7 @@ import Network.Wai.Handler.Warp (Port, run)
 import Servant (
     Application,
     Handler,
+    NoContent (NoContent),
     Proxy (..),
     Server,
     ServerError (errBody),
@@ -78,15 +80,18 @@ server =
                                     )
                             )
 
-    deleteProject :: ProjectId -> Handler ()
+    deleteProject :: ProjectId -> Handler NoContent
     deleteProject projId = do
         projMap <- liftIO $ readIORef appState
         if Map.notMember projId projMap
             then throwError $ err404{errBody = "Failed to delete project: ID doesn't exist"}
             else liftIO $ atomicModifyIORef appState (\projMap_ -> (Map.delete projId projMap_, ()))
+        pure NoContent
 
-    reset :: Handler ()
-    reset = liftIO $ writeIORef appState Map.empty
+    reset :: Handler NoContent
+    reset = do
+        liftIO $ writeIORef appState Map.empty
+        pure NoContent
 
 
 appState :: IORef (Map ProjectId String)
@@ -95,4 +100,4 @@ appState = unsafePerformIO $ newIORef Map.empty
 
 
 maxCapacity :: Int
-maxCapacity = 10
+maxCapacity = 5

@@ -15,7 +15,7 @@ module App.Client (
 import Data.Data (Proxy (Proxy))
 import Network.HTTP.Client (defaultManagerSettings, newManager)
 import Network.Wai.Handler.Warp (Port)
-import Servant.API (type (:<|>) ((:<|>)))
+import Servant.API (NoContent, type (:<|>) ((:<|>)))
 import Servant.Client (BaseUrl (BaseUrl), ClientEnv, ClientM, Scheme (Http), client, mkClientEnv)
 
 import App.Api as Api (API, CreateProject (..), Project (..), ProjectId (..))
@@ -30,8 +30,8 @@ initClientEnv port = do
 
 getProjects :: ClientM [Project]
 createProject :: CreateProject -> ClientM ProjectId
-deleteProject :: ProjectId -> ClientM ()
-reset :: ClientM ()
+deleteProject :: ProjectId -> ClientM NoContent
+reset :: ClientM NoContent
 getProjects
     :<|> createProject
     :<|> deleteProject
