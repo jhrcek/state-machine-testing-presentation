@@ -1,0 +1,13 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "state-machine-testing-presentation:lib"
+
+    - path: "./app-server/Main.hs"
+      component: "state-machine-testing-presentation:exe:app-server"
+
+    - path: "./dump-drill-config/Main.hs"
+      component: "state-machine-testing-presentation:exe:dump-drill-config"
+
+    - path: "./test"
+      component: "state-machine-testing-presentation:test:state-machine-testing-presentation-test"

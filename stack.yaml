@@ -1,3 +1,5 @@
 resolver: lts-17.10
 packages:
 - .
+extra-deps:
+- servant-benchmark-0.1.1.1@sha256:be3e448b7cf3f08ec781f06853f4043be30edc6a292d7a21f7696c9259ebe616,2527

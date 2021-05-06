@@ -13,14 +13,14 @@ module App.Api (
 
 import Data.Aeson (FromJSON, ToJSON)
 import GHC.Generics (Generic)
-import Servant (Capture, DeleteNoContent, FromHttpApiData, Get, JSON, Post, ReqBody, ToHttpApiData, type (:<|>), type (:>))
+import Servant (Capture, Delete, DeleteNoContent, FromHttpApiData, Get, JSON, NoContent (NoContent), Post, ReqBody, ToHttpApiData, type (:<|>), type (:>))
 
 
 type API =
     "projects" :> Get '[JSON] [Project]
         :<|> "projects" :> ReqBody '[JSON] CreateProject :> Post '[JSON] ProjectId
-        :<|> "projects" :> Capture "project-id" ProjectId :> DeleteNoContent
-        :<|> "reset" :> DeleteNoContent
+        :<|> "projects" :> Capture "project-id" ProjectId :> Delete '[JSON] NoContent
+        :<|> "reset" :> Delete '[JSON] NoContent
 
 
 newtype ProjectId = ProjectId

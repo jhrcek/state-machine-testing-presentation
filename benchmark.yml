@@ -1,0 +1,43 @@
+base: http://localhost:8080
+rampup: 10
+iterations: 10
+concurrency: 2
+plan:
+- name: get projects
+  request:
+    url: /projects
+    body: null
+    method: GET
+    headers: {}
+- name: create project
+  request:
+    url: /projects
+    body: '";"'
+    method: POST
+    headers:
+      Content-Type: application/json
+- name: create project
+  request:
+    url: /projects
+    body: "\"=X(m\U000FC867\U000182727\\th2IY \U001024EAG\U00106225M\U000F92E2V\U0010F260C\U000F5FEE&K\U0010274C\U001043C6\""
+    method: POST
+    headers:
+      Content-Type: application/json
+- name: delete project
+  request:
+    url: /projects/ProjectId {unProjectId = -22}
+    body: null
+    method: DELETE
+    headers: {}
+- name: delete project
+  request:
+    url: /projects/ProjectId {unProjectId = 25}
+    body: null
+    method: DELETE
+    headers: {}
+- name: reset
+  request:
+    url: /reset
+    body: null
+    method: DELETE
+    headers: {}
